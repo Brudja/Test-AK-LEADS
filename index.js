@@ -7,13 +7,14 @@ const zipInfo = document.querySelector(".zipInfo");
 
 buttonElement.addEventListener("click", fetchZipCode);
 
-function fetchZipCode() {
-  let referer = document.referrer;
+let referer = document.referrer;
   let utmParams = new URLSearchParams(location.search);
 
   if (referer && referer !== '' && !referer.includes(location.hostname)) {
   }
 
+function fetchZipCode() {
+  
   let ipAddressPromise = fetch('https://api.ipify.org/?format=json')
     .then((response) => response.json())
     .then((data) => {
@@ -25,8 +26,8 @@ function fetchZipCode() {
       addBackButtonListener()
     });
 
-  let zipCode = inputElement.value;
 
+  let zipCode = inputElement.value;
   if (!/^\d{5}$/.test(zipCode)) {
     zipInfo.innerHTML = "<p class='error'>Invalid zip code. Please enter a 5-digit zip code.</p>";
     showBackButton();
@@ -49,7 +50,7 @@ function fetchZipCode() {
       throw new Error('Zip code not found in database');
     }
   })
-  .catch((error) => {
+  .catch(() => {
     zipInfo.innerHTML = "<p class='error'>Invalid zip code. Zip code not found in database.</p>";
     showBackButton();
     addBackButtonListener()
@@ -60,7 +61,7 @@ function fetchZipCode() {
       const userAgent = navigator.appVersion;
       markupInfo(zipData, referer, utmParams, ipAddress, userAgent);
     })
-    .catch((error) => console.error(error));
+    .catch();
 }
 
 const backButton = document.createElement('button');
@@ -78,6 +79,7 @@ function hideBackButton() {
 function addBackButtonListener() {
   backButton.addEventListener('click', backButtonClickHandler);
 }
+
 function backButtonClickHandler() {
   window.location.href = '/';
   hideBackButton();
@@ -95,7 +97,6 @@ function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
     utmParamsMarkup += `<p><span class="spantext">${key}:</span> ${value}</p>`;
   }
   
-
   zipInfo.innerHTML = `
     <p><span class="spantext">City:</span> ${city}</p>
     <p><span class="spantext">State:</span> ${state}</p>
