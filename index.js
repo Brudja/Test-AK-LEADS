@@ -81,7 +81,7 @@ function addBackButtonListener() {
 }
 
 function backButtonClickHandler() {
-  window.location.href = '/';
+  window.location.href = 'https://brudja.github.io/Test-AK-LEADS/';
   hideBackButton();
   backButton.removeEventListener('click', backButtonClickHandler);
 }
