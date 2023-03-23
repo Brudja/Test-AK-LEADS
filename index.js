@@ -19,34 +19,82 @@ function fetchZipCode() {
     .then((data) => {
       return data.ip;
     })
-    .catch((error) => console.error(error));
+    .catch((error) => {
+      zipInfo.innerHTML = "<p class='error'>Invalid zip code. Zip code not found in database.</p>";
+      showBackButton();
+      addBackButtonListener()
+    });
 
   let zipCode = inputElement.value;
-  let zipCodePromise = fetch(`${BASE_URL}?apikey=${apiKey}&codes=${zipCode}&country=us`)
-    .then((response) => response.json())
-    .then((data) => {
+
+  if (!/^\d{5}$/.test(zipCode)) {
+    zipInfo.innerHTML = "<p class='error'>Invalid zip code. Please enter a 5-digit zip code.</p>";
+    showBackButton();
+    addBackButtonListener()
+    return;
+  }
+
+ let zipCodePromise = fetch(`${BASE_URL}?apikey=${apiKey}&codes=${zipCode}&country=us`)
+  .then((response) => response.json())
+  .then((data) => {
+    if (zipCode in data.results) {
       let result = data.results[zipCode][0];
       let city = result.city;
       let state = result.state;
       return { city, state };
-    })
-    .catch((error) => console.error(error));
+    } else {
+      zipInfo.innerHTML = "<p class='error'>Invalid zip code. Zip code not found in database.</p>";
+      showBackButton();
+      addBackButtonListener()
+      throw new Error('Zip code not found in database');
+    }
+  })
+  .catch((error) => {
+    zipInfo.innerHTML = "<p class='error'>Invalid zip code. Zip code not found in database.</p>";
+    showBackButton();
+    addBackButtonListener()
+  });
 
   Promise.all([ipAddressPromise, zipCodePromise])
     .then(([ipAddress, zipData]) => {
-      const userAgent = navigator.userAgent;
+      const userAgent = navigator.appVersion;
       markupInfo(zipData, referer, utmParams, ipAddress, userAgent);
     })
     .catch((error) => console.error(error));
 }
 
+const backButton = document.createElement('button');
+backButton.textContent = 'Back to Home';
+backButton.classList.add('btn', 'btn-primary', 'mb-3', 'd-none');
+zipInfo.after(backButton);
+
+function showBackButton() {
+  backButton.classList.remove('d-none');
+}
+function hideBackButton() {
+  backButton.classList.add('d-none');
+}
+
+function addBackButtonListener() {
+  backButton.addEventListener('click', backButtonClickHandler);
+}
+function backButtonClickHandler() {
+  window.location.href = '/';
+  hideBackButton();
+  backButton.removeEventListener('click', backButtonClickHandler);
+}
+
 function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
+  if (!zipData) {
+    return;
+  }
   const { city, state } = zipData;
 
   let utmParamsMarkup = '';
   for (let [key, value] of utmParams) {
     utmParamsMarkup += `<p><span class="spantext">${key}:</span> ${value}</p>`;
   }
+  
 
   zipInfo.innerHTML = `
     <p><span class="spantext">City:</span> ${city}</p>
@@ -56,4 +104,7 @@ function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
     ${referer && referer !== '' && !referer.includes(location.hostname) ? `<p><span class="spantext">HTTP Referer:</span> ${referer}</p>` : ''}
     ${utmParamsMarkup}
   `;
+  showBackButton()
+  addBackButtonListener();
+  
 }
