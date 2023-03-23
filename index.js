@@ -14,34 +14,39 @@ function fetchZipCode() {
   if (referer && referer !== '' && !referer.includes(location.hostname)) {
   }
 
-  let ipAddress = null;
-  let userAgent = null;
-  fetch('https://api.ipify.org/?format=json')
+  let ipAddressPromise = fetch('https://api.ipify.org/?format=json')
     .then((response) => response.json())
     .then((data) => {
-      console.log(data);
-      ipAddress = data.ip;
-      userAgent = navigator.userAgent;
+      return data.ip;
     })
     .catch((error) => console.error(error));
-  let zipCode = inputElement.value
-  console.log('zipCode :>> ', zipCode);
-  fetch(`${BASE_URL}?apikey=${apiKey}&codes=${zipCode}&country=us`)
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-    let result = data.results[zipCode][0];
-    let city = result.city;
-    let state = result.state;
-    return { city, state };
-  })
-  .then((zipData) =>markupInfo(zipData, referer, utmParams, ipAddress, userAgent))
-  .catch((error) => console.error(error));
+
+  let zipCode = inputElement.value;
+  let zipCodePromise = fetch(`${BASE_URL}?apikey=${apiKey}&codes=${zipCode}&country=us`)
+    .then((response) => response.json())
+    .then((data) => {
+      let result = data.results[zipCode][0];
+      let city = result.city;
+      let state = result.state;
+      return { city, state };
+    })
+    .catch((error) => console.error(error));
+
+  Promise.all([ipAddressPromise, zipCodePromise])
+    .then(([ipAddress, zipData]) => {
+      const userAgent = navigator.userAgent;
+      markupInfo(zipData, referer, utmParams, ipAddress, userAgent);
+    })
+    .catch((error) => console.error(error));
 }
 
 function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
-  console.log(zipData);
   const { city, state } = zipData;
+
+  let utmParamsMarkup = '';
+  for (let [key, value] of utmParams) {
+    utmParamsMarkup += `<p><span class="spantext">${key}:</span> ${value}</p>`;
+  }
 
   zipInfo.innerHTML = `
     <p><span class="spantext">City:</span> ${city}</p>
@@ -49,6 +54,6 @@ function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
     ${ipAddress ? `<p><span class="spantext">IP Address:</span> ${ipAddress}</p>` : ''}
     ${userAgent ? `<p><span class="spantext">User Agent:</span> ${userAgent}</p>` : ''}
     ${referer && referer !== '' && !referer.includes(location.hostname) ? `<p><span class="spantext">HTTP Referer:</span> ${referer}</p>` : ''}
-    ${utmParams.toString() !== '' ? `<p><span class="spantext">UTM parameters:</span> ${utmParams.toString()}</p>` : ''}
+    ${utmParamsMarkup}
   `;
 }
