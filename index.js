@@ -86,13 +86,7 @@ function backButtonClickHandler() {
   backButton.removeEventListener('click', backButtonClickHandler);
 }
 
-const loader = document.createElement('div');
-loader.classList.add('loader');
-document.body.appendChild(loader);
-
 function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
-  const loader = document.querySelector('.loader');
-  loader.style.display = 'block';
   if (!zipData) {
     return;
   }
@@ -111,9 +105,7 @@ function markupInfo(zipData, referer, utmParams, ipAddress, userAgent) {
     ${referer && referer !== '' && !referer.includes(location.hostname) ? `<p><span class="spantext">HTTP Referer:</span> ${referer}</p>` : ''}
     ${utmParamsMarkup}
   `;
-  loader.style.display = 'none';
   showBackButton()
   addBackButtonListener();
-
   
 }
